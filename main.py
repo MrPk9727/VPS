@@ -16,8 +16,8 @@ import sqlite3
 
 # Load environment variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-MAIN_ADMIN_ID = int(os.getenv('MAIN_ADMIN_ID', '1210291131301101618'))
-VPS_USER_ROLE_ID = int(os.getenv('VPS_USER_ROLE_ID', '1210291131301101618'))
+MAIN_ADMIN_ID = int(os.getenv('MAIN_ADMIN_ID', '1458081904594260069'))
+VPS_USER_ROLE_ID = int(os.getenv('VPS_USER_ROLE_ID', '1458081933992001650'))
 DEFAULT_STORAGE_POOL = os.getenv('DEFAULT_STORAGE_POOL', 'default')
 
 # OS Options for VPS Creation
@@ -2193,3 +2193,4 @@ if __name__ == "__main__":
         bot.run(DISCORD_TOKEN)
     else:
         logger.error("No Discord token found in DISCORD_TOKEN environment variable.")
+
