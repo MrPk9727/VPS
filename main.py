@@ -40,7 +40,7 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger('unixnodes_vps_bot')
+logger = logging.getLogger('RTC_vps_bot')
 
 # Check if lxc command is available
 if not shutil.which("lxc"):
@@ -205,15 +205,15 @@ def truncate_text(text, max_length=1024):
         return text
     return text[:max_length-3] + "..."
 
-# Embed creation functions with black theme and UnixNodes branding
+# Embed creation functions with black theme and RTC branding
 def create_embed(title, description="", color=0x1a1a1a):
     embed = discord.Embed(
-        title=truncate_text(f"⭐ UnixNodes - {title}", 256),
+        title=truncate_text(f"⭐ RTC - {title}", 256),
         description=truncate_text(description, 4096),
         color=color
     )
     embed.set_thumbnail(url="https://i.imgur.com/xSsIERx.png")
-    embed.set_footer(text=f"UnixNodes VPS Manager • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    embed.set_footer(text=f"RTC VPS Manager • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                      icon_url="https://i.imgur.com/xSsIERx.png")
     return embed
 
@@ -243,7 +243,7 @@ def is_admin():
         user_id = str(ctx.author.id)
         if user_id == str(MAIN_ADMIN_ID) or user_id in admin_data.get("admins", []):
             return True
-        raise commands.CheckFailure("You need admin permissions to use this command. Contact UnixNodes support.")
+        raise commands.CheckFailure("You need admin permissions to use this command. Contact RTC support.")
     return commands.check(predicate)
 
 def is_main_admin():
@@ -298,22 +298,22 @@ async def get_or_create_vps_role(guild):
         role = guild.get_role(VPS_USER_ROLE_ID)
         if role:
             return role
-    role = discord.utils.get(guild.roles, name="UnixNodes VPS User")
+    role = discord.utils.get(guild.roles, name="RTC VPS User")
     if role:
         VPS_USER_ROLE_ID = role.id
         return role
     try:
         role = await guild.create_role(
-            name="UnixNodes VPS User",
+            name="RTC VPS User",
             color=discord.Color.dark_purple(),
-            reason="UnixNodes VPS User role for bot management",
+            reason="RTC VPS User role for bot management",
             permissions=discord.Permissions.none()
         )
         VPS_USER_ROLE_ID = role.id
-        logger.info(f"Created UnixNodes VPS User role: {role.name} (ID: {role.id})")
+        logger.info(f"Created RTC VPS User role: {role.name} (ID: {role.id})")
         return role
     except Exception as e:
-        logger.error(f"Failed to create UnixNodes VPS User role: {e}")
+        logger.error(f"Failed to create RTC VPS User role: {e}")
         return None
 
 # Host resource monitoring functions
@@ -521,8 +521,8 @@ def get_uptime():
 @bot.event
 async def on_ready():
     logger.info(f'{bot.user} has connected to Discord!')
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="UnixNodes VPS Manager"))
-    logger.info("UnixNodes Bot is ready!")
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="RTC VPS Manager"))
+    logger.info("RTC Bot is ready!")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -533,19 +533,19 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.BadArgument):
         await ctx.send(embed=create_error_embed("Invalid Argument", "Please check your input and try again."))
     elif isinstance(error, commands.CheckFailure):
-        error_msg = str(error) if str(error) else "You need admin permissions for this command. Contact UnixNodes support."
+        error_msg = str(error) if str(error) else "You need admin permissions for this command. Contact RTC support."
         await ctx.send(embed=create_error_embed("Access Denied", error_msg))
     elif isinstance(error, discord.NotFound):
         await ctx.send(embed=create_error_embed("Error", "The requested resource was not found. Please try again."))
     else:
         logger.error(f"Command error: {error}")
-        await ctx.send(embed=create_error_embed("System Error", "An unexpected error occurred. UnixNodes support has been notified."))
+        await ctx.send(embed=create_error_embed("System Error", "An unexpected error occurred. RTC support has been notified."))
 
 # Bot commands
 @bot.command(name='ping')
 async def ping(ctx):
     latency = round(bot.latency * 1000)
-    embed = create_success_embed("Pong!", f"UnixNodes Bot latency: {latency}ms")
+    embed = create_success_embed("Pong!", f"RTC Bot latency: {latency}ms")
     await ctx.send(embed=embed)
 
 @bot.command(name='uptime')
@@ -595,11 +595,11 @@ async def my_vps(ctx):
     user_id = str(ctx.author.id)
     vps_list = vps_data.get(user_id, [])
     if not vps_list:
-        embed = create_error_embed("No VPS Found", "You don't have any UnixNodes VPS. Contact an admin to create one.")
-        add_field(embed, "Quick Actions", "• `!manage` - Manage VPS\n• Contact UnixNodes admin for VPS creation", False)
+        embed = create_error_embed("No VPS Found", "You don't have any RTC VPS. Contact an admin to create one.")
+        add_field(embed, "Quick Actions", "• `!manage` - Manage VPS\n• Contact RTC admin for VPS creation", False)
         await ctx.send(embed=embed)
         return
-    embed = create_info_embed("My UnixNodes VPS", "")
+    embed = create_info_embed("My RTC VPS", "")
     text = []
     for i, vps in enumerate(vps_list):
         status = vps.get('status', 'unknown').upper()
@@ -618,7 +618,7 @@ async def my_vps(ctx):
 async def lxc_list(ctx):
     try:
         result = await execute_lxc("lxc list")
-        embed = create_info_embed("UnixNodes LXC Containers List", result)
+        embed = create_info_embed("RTC LXC Containers List", result)
         await ctx.send(embed=embed)
     except Exception as e:
         await ctx.send(embed=create_error_embed("Error", str(e)))
@@ -650,7 +650,7 @@ class OSSelectView(discord.ui.View):
         if user_id not in vps_data:
             vps_data[user_id] = []
         vps_count = len(vps_data[user_id]) + 1
-        container_name = f"unixnodes-vps-{user_id}-{vps_count}"
+        container_name = f"RTC-vps-{user_id}-{vps_count}"
         ram_mb = self.ram * 1024
         try:
             await execute_lxc(f"lxc init {os_version} {container_name} -s {DEFAULT_STORAGE_POOL}")
@@ -681,10 +681,10 @@ class OSSelectView(discord.ui.View):
                 vps_role = await get_or_create_vps_role(self.ctx.guild)
                 if vps_role:
                     try:
-                        await self.user.add_roles(vps_role, reason="UnixNodes VPS ownership granted")
+                        await self.user.add_roles(vps_role, reason="RTC VPS ownership granted")
                     except discord.Forbidden:
-                        logger.warning(f"Failed to assign UnixNodes VPS role to {self.user.name}")
-            success_embed = create_success_embed("UnixNodes VPS Created Successfully")
+                        logger.warning(f"Failed to assign RTC VPS role to {self.user.name}")
+            success_embed = create_success_embed("RTC VPS Created Successfully")
             add_field(success_embed, "Owner", self.user.mention, True)
             add_field(success_embed, "VPS ID", f"#{vps_count}", True)
             add_field(success_embed, "Container", f"`{container_name}`", True)
@@ -693,9 +693,9 @@ class OSSelectView(discord.ui.View):
             add_field(success_embed, "Features", "Nesting, Privileged, FUSE, Kernel Modules (Docker Ready)", False)
             add_field(success_embed, "Disk Note", "Run `sudo resize2fs /` inside VPS if needed to expand filesystem.", False)
             await interaction.followup.send(embed=success_embed)
-            dm_embed = create_success_embed("UnixNodes VPS Created!", f"Your VPS has been successfully deployed by an admin!")
+            dm_embed = create_success_embed("RTC VPS Created!", f"Your VPS has been successfully deployed by an admin!")
             add_field(dm_embed, "VPS Details", f"**VPS ID:** #{vps_count}\n**Container Name:** `{container_name}`\n**Configuration:** {config_str}\n**Status:** Running\n**OS:** {os_version}\n**Created:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", False)
-            add_field(dm_embed, "Management", "• Use `!manage` to start/stop/reinstall your UnixNodes VPS\n• Use `!manage` → SSH for terminal access\n• Contact UnixNodes admin for upgrades or issues", False)
+            add_field(dm_embed, "Management", "• Use `!manage` to start/stop/reinstall your RTC VPS\n• Use `!manage` → SSH for terminal access\n• Contact RTC admin for upgrades or issues", False)
             add_field(dm_embed, "Important Notes", "• Full root access via SSH\n• Docker-ready with nesting and privileged mode\n• Back up your data regularly", False)
             try:
                 await self.user.send(embed=dm_embed)
@@ -731,15 +731,15 @@ class ManageView(discord.ui.View):
         if len(vps_list) > 1:
             options = [
                 discord.SelectOption(
-                    label=f"UnixNodes VPS {i+1} ({v.get('config', 'Custom')})",
+                    label=f"RTC VPS {i+1} ({v.get('config', 'Custom')})",
                     description=f"Status: {v.get('status', 'unknown')}",
                     value=str(i)
                 ) for i, v in enumerate(vps_list)
             ]
-            self.select = discord.ui.Select(placeholder="Select a UnixNodes VPS to manage", options=options)
+            self.select = discord.ui.Select(placeholder="Select a RTC VPS to manage", options=options)
             self.select.callback = self.select_vps
             self.add_item(self.select)
-            self.initial_embed = create_embed("UnixNodes VPS Management", "Select a VPS from the dropdown menu below.", 0x1a1a1a)
+            self.initial_embed = create_embed("RTC VPS Management", "Select a VPS from the dropdown menu below.", 0x1a1a1a)
             add_field(self.initial_embed, "Available VPS", "\n".join([f"**VPS {i+1}:** `{v['container_name']}` - Status: `{v.get('status', 'unknown').upper()}`" for i, v in enumerate(vps_list)]), False)
         else:
             self.selected_index = 0
@@ -777,7 +777,7 @@ class ManageView(discord.ui.View):
             except:
                 owner_text = f"\n**Owner ID:** {self.owner_id}"
         embed = create_embed(
-            f"UnixNodes VPS Management - VPS {index + 1}",
+            f"RTC VPS Management - VPS {index + 1}",
             f"Managing container: `{container_name}`{owner_text}",
             status_color
         )
@@ -790,12 +790,12 @@ class ManageView(discord.ui.View):
         resource_info += f"**Uptime:** {uptime}"
         add_field(embed, "📊 Allocated Resources", resource_info, False)
         if suspended:
-            add_field(embed, "⚠️ Suspended", "This UnixNodes VPS is suspended. Contact an admin to unsuspend.", False)
+            add_field(embed, "⚠️ Suspended", "This RTC VPS is suspended. Contact an admin to unsuspend.", False)
         if whitelisted:
             add_field(embed, "✅ Whitelisted", "This VPS is exempt from auto-suspension.", False)
         live_stats = f"**CPU Usage:** {cpu_usage}\n**Memory:** {memory_usage}\n**Disk:** {disk_usage}"
         add_field(embed, "📈 Live Usage", live_stats, False)
-        add_field(embed, "🎮 Controls", "Use the buttons below to manage your UnixNodes VPS", False)
+        add_field(embed, "🎮 Controls", "Use the buttons below to manage your RTC VPS", False)
         return embed
 
     def add_action_buttons(self):
@@ -818,7 +818,7 @@ class ManageView(discord.ui.View):
 
     async def select_vps(self, interaction: discord.Interaction):
         if str(interaction.user.id) != self.user_id and not self.is_admin:
-            await interaction.response.send_message(embed=create_error_embed("Access Denied", "This is not your UnixNodes VPS!"), ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Access Denied", "This is not your RTC VPS!"), ephemeral=True)
             return
         self.selected_index = int(self.select.values[0])
         new_embed = await self.create_vps_embed(self.selected_index)
@@ -828,7 +828,7 @@ class ManageView(discord.ui.View):
 
     async def action_callback(self, interaction: discord.Interaction, action: str):
         if str(interaction.user.id) != self.user_id and not self.is_admin:
-            await interaction.response.send_message(embed=create_error_embed("Access Denied", "This is not your UnixNodes VPS!"), ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Access Denied", "This is not your RTC VPS!"), ephemeral=True)
             return
         if self.selected_index is None:
             await interaction.response.send_message(embed=create_error_embed("No VPS Selected", "Please select a VPS first."), ephemeral=True)
@@ -837,7 +837,7 @@ class ManageView(discord.ui.View):
         target_vps = vps_data[self.owner_id][actual_idx]
         suspended = target_vps.get('suspended', False)
         if suspended and not self.is_admin and action != 'stats':
-            await interaction.response.send_message(embed=create_error_embed("Access Denied", "This UnixNodes VPS is suspended. Contact an admin to unsuspend."), ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Access Denied", "This RTC VPS is suspended. Contact an admin to unsuspend."), ephemeral=True)
             return
         container_name = target_vps["container_name"]
         if action == 'stats':
@@ -846,7 +846,7 @@ class ManageView(discord.ui.View):
             memory_usage = await get_container_memory(container_name)
             disk_usage = await get_container_disk(container_name)
             uptime = await get_container_uptime(container_name)
-            stats_embed = create_info_embed("📈 UnixNodes Live Statistics", f"Real-time stats for `{container_name}`")
+            stats_embed = create_info_embed("📈 RTC Live Statistics", f"Real-time stats for `{container_name}`")
             add_field(stats_embed, "Status", f"`{status.upper()}`", True)
             add_field(stats_embed, "CPU", cpu_usage, True)
             add_field(stats_embed, "Memory", memory_usage, True)
@@ -856,13 +856,13 @@ class ManageView(discord.ui.View):
             return
         if action == 'reinstall':
             if self.is_shared or self.is_admin:
-                await interaction.response.send_message(embed=create_error_embed("Access Denied", "Only the UnixNodes VPS owner can reinstall!"), ephemeral=True)
+                await interaction.response.send_message(embed=create_error_embed("Access Denied", "Only the RTC VPS owner can reinstall!"), ephemeral=True)
                 return
             if suspended:
-                await interaction.response.send_message(embed=create_error_embed("Cannot Reinstall", "Unsuspend the UnixNodes VPS first."), ephemeral=True)
+                await interaction.response.send_message(embed=create_error_embed("Cannot Reinstall", "Unsuspend the RTC VPS first."), ephemeral=True)
                 return
             os_version = target_vps.get('os_version', 'ubuntu:22.04')
-            confirm_embed = create_warning_embed("UnixNodes Reinstall Warning",
+            confirm_embed = create_warning_embed("RTC Reinstall Warning",
                 f"⚠️ **WARNING:** This will erase all data on VPS `{container_name}` and reinstall {os_version}.\n\n"
                 f"This action cannot be undone. Continue?")
             class ConfirmView(discord.ui.View):
@@ -879,7 +879,7 @@ class ManageView(discord.ui.View):
                     try:
                         await inter.followup.send(embed=create_info_embed("Deleting Container", f"Forcefully removing container `{self.container_name}`..."), ephemeral=True)
                         await execute_lxc(f"lxc delete {self.container_name} --force")
-                        await inter.followup.send(embed=create_info_embed("Recreating Container", f"Creating new UnixNodes container `{self.container_name}`..."), ephemeral=True)
+                        await inter.followup.send(embed=create_info_embed("Recreating Container", f"Creating new RTC container `{self.container_name}`..."), ephemeral=True)
                         target_vps = vps_data[self.owner_id][self.actual_idx]
                         original_ram = target_vps["ram"]
                         original_cpu = target_vps["cpu"]
@@ -900,7 +900,7 @@ class ManageView(discord.ui.View):
                         config_str = f"{ram_gb}GB RAM / {original_cpu} CPU / {storage_gb}GB Disk"
                         target_vps["config"] = config_str
                         save_vps_data()
-                        await inter.followup.send(embed=create_success_embed("Reinstall Complete", f"UnixNodes VPS `{self.container_name}` has been successfully reinstalled!"), ephemeral=True)
+                        await inter.followup.send(embed=create_success_embed("Reinstall Complete", f"RTC VPS `{self.container_name}` has been successfully reinstalled!"), ephemeral=True)
                         new_embed = await self.parent_view.create_vps_embed(self.parent_view.selected_index)
                         await inter.followup.send(embed=new_embed, view=self.parent_view, ephemeral=True)
                     except Exception as e:
@@ -922,7 +922,7 @@ class ManageView(discord.ui.View):
                 await execute_lxc(f"lxc start {container_name}")
                 target_vps["status"] = "running"
                 save_vps_data()
-                await interaction.followup.send(embed=create_success_embed("VPS Started", f"UnixNodes VPS `{container_name}` is now running!"), ephemeral=True)
+                await interaction.followup.send(embed=create_success_embed("VPS Started", f"RTC VPS `{container_name}` is now running!"), ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(embed=create_error_embed("Start Failed", str(e)), ephemeral=True)
         elif action == 'stop':
@@ -930,14 +930,14 @@ class ManageView(discord.ui.View):
                 await execute_lxc(f"lxc stop {container_name}", timeout=120)
                 target_vps["status"] = "stopped"
                 save_vps_data()
-                await interaction.followup.send(embed=create_success_embed("VPS Stopped", f"UnixNodes VPS `{container_name}` has been stopped!"), ephemeral=True)
+                await interaction.followup.send(embed=create_success_embed("VPS Stopped", f"RTC VPS `{container_name}` has been stopped!"), ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(embed=create_error_embed("Stop Failed", str(e)), ephemeral=True)
         elif action == 'tmate':
             if suspended:
-                await interaction.followup.send(embed=create_error_embed("Access Denied", "Cannot access suspended UnixNodes VPS."), ephemeral=True)
+                await interaction.followup.send(embed=create_error_embed("Access Denied", "Cannot access suspended RTC VPS."), ephemeral=True)
                 return
-            await interaction.followup.send(embed=create_info_embed("SSH Access", "Generating UnixNodes SSH connection..."), ephemeral=True)
+            await interaction.followup.send(embed=create_info_embed("SSH Access", "Generating RTC SSH connection..."), ephemeral=True)
             try:
                 check_proc = await asyncio.create_subprocess_exec(
                     "lxc", "exec", container_name, "--", "which", "tmate",
@@ -949,8 +949,8 @@ class ManageView(discord.ui.View):
                     await interaction.followup.send(embed=create_info_embed("Installing SSH", "Installing tmate..."), ephemeral=True)
                     await execute_lxc(f"lxc exec {container_name} -- apt-get update -y")
                     await execute_lxc(f"lxc exec {container_name} -- apt-get install tmate -y")
-                    await interaction.followup.send(embed=create_success_embed("Installed", "UnixNodes SSH service installed!"), ephemeral=True)
-                session_name = f"unixnodes-session-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                    await interaction.followup.send(embed=create_success_embed("Installed", "RTC SSH service installed!"), ephemeral=True)
+                session_name = f"RTC-session-{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 await execute_lxc(f"lxc exec {container_name} -- tmate -S /tmp/{session_name}.sock new-session -d")
                 await asyncio.sleep(3)
                 ssh_proc = await asyncio.create_subprocess_exec(
@@ -962,14 +962,14 @@ class ManageView(discord.ui.View):
                 ssh_url = stdout.decode().strip() if stdout else None
                 if ssh_url:
                     try:
-                        ssh_embed = create_embed("🔑 UnixNodes SSH Access", f"SSH connection for VPS `{container_name}`:", 0x00ff88)
+                        ssh_embed = create_embed("🔑 RTC SSH Access", f"SSH connection for VPS `{container_name}`:", 0x00ff88)
                         add_field(ssh_embed, "Command", f"```{ssh_url}```", False)
                         add_field(ssh_embed, "⚠️ Security", "This link is temporary. Do not share it.", False)
                         add_field(ssh_embed, "📝 Session", f"Session ID: {session_name}", False)
                         await interaction.user.send(embed=ssh_embed)
-                        await interaction.followup.send(embed=create_success_embed("SSH Sent", f"Check your DMs for UnixNodes SSH link! Session: {session_name}"), ephemeral=True)
+                        await interaction.followup.send(embed=create_success_embed("SSH Sent", f"Check your DMs for RTC SSH link! Session: {session_name}"), ephemeral=True)
                     except discord.Forbidden:
-                        await interaction.followup.send(embed=create_error_embed("DM Failed", "Enable DMs to receive UnixNodes SSH link!"), ephemeral=True)
+                        await interaction.followup.send(embed=create_error_embed("DM Failed", "Enable DMs to receive RTC SSH link!"), ephemeral=True)
                 else:
                     error_msg = stderr.decode().strip() if stderr else "Unknown error"
                     await interaction.followup.send(embed=create_error_embed("SSH Failed", error_msg), ephemeral=True)
@@ -983,21 +983,21 @@ async def manage_vps(ctx, user: discord.Member = None):
     if user:
         user_id_check = str(ctx.author.id)
         if user_id_check != str(MAIN_ADMIN_ID) and user_id_check not in admin_data.get("admins", []):
-            await ctx.send(embed=create_error_embed("Access Denied", "Only UnixNodes admins can manage other users' VPS."))
+            await ctx.send(embed=create_error_embed("Access Denied", "Only RTC admins can manage other users' VPS."))
             return
         user_id = str(user.id)
         vps_list = vps_data.get(user_id, [])
         if not vps_list:
-            await ctx.send(embed=create_error_embed("No VPS Found", f"{user.mention} doesn't have any UnixNodes VPS."))
+            await ctx.send(embed=create_error_embed("No VPS Found", f"{user.mention} doesn't have any RTC VPS."))
             return
         view = ManageView(str(ctx.author.id), vps_list, is_admin=True, owner_id=user_id)
-        await ctx.send(embed=create_info_embed(f"Managing {user.name}'s UnixNodes VPS", f"Managing VPS for {user.mention}"), view=view)
+        await ctx.send(embed=create_info_embed(f"Managing {user.name}'s RTC VPS", f"Managing VPS for {user.mention}"), view=view)
     else:
         user_id = str(ctx.author.id)
         vps_list = vps_data.get(user_id, [])
         if not vps_list:
-            embed = create_error_embed("No VPS Found", "You don't have any UnixNodes VPS. Contact an admin to create one.")
-            add_field(embed, "Quick Actions", "• `!manage` - Manage VPS\n• Contact UnixNodes admin for VPS creation", False)
+            embed = create_error_embed("No VPS Found", "You don't have any RTC VPS. Contact an admin to create one.")
+            add_field(embed, "Quick Actions", "• `!manage` - Manage VPS\n• Contact RTC admin for VPS creation", False)
             await ctx.send(embed=embed)
             return
         view = ManageView(user_id, vps_list)
@@ -1030,7 +1030,7 @@ async def list_all_vps(ctx):
             suspended_vps += user_suspended
             whitelisted_vps += user_whitelisted
 
-            user_summary.append(f"**{user.name}** ({user.mention}) - {user_vps_count} UnixNodes VPS ({user_running} running, {user_suspended} suspended, {user_whitelisted} whitelisted)")
+            user_summary.append(f"**{user.name}** ({user.mention}) - {user_vps_count} RTC VPS ({user_running} running, {user_suspended} suspended, {user_whitelisted} whitelisted)")
 
             for i, vps in enumerate(vps_list):
                 status_emoji = "🟢" if vps.get('status') == 'running' and not vps.get('suspended', False) else "🟡" if vps.get('suspended', False) else "🔴"
@@ -1042,12 +1042,12 @@ async def list_all_vps(ctx):
                 vps_info.append(f"{status_emoji} **{user.name}** - VPS {i+1}: `{vps['container_name']}` - {vps.get('config', 'Custom')} - {status_text}")
 
         except discord.NotFound:
-            vps_info.append(f"❓ Unknown User ({user_id}) - {len(vps_list)} UnixNodes VPS")
-    embed = create_embed("All UnixNodes VPS Information", "Complete overview of all UnixNodes VPS deployments and user statistics", 0x1a1a1a)
+            vps_info.append(f"❓ Unknown User ({user_id}) - {len(vps_list)} RTC VPS")
+    embed = create_embed("All RTC VPS Information", "Complete overview of all RTC VPS deployments and user statistics", 0x1a1a1a)
     add_field(embed, "System Overview", f"**Total Users:** {total_users}\n**Total VPS:** {total_vps}\n**Running:** {running_vps}\n**Stopped:** {stopped_vps}\n**Suspended:** {suspended_vps}\n**Whitelisted:** {whitelisted_vps}", False)
     await ctx.send(embed=embed)
     if user_summary:
-        embed = create_embed("UnixNodes User Summary", f"Summary of all users and their UnixNodes VPS", 0x1a1a1a)
+        embed = create_embed("RTC User Summary", f"Summary of all users and their RTC VPS", 0x1a1a1a)
         summary_text = "\n".join(user_summary)
         chunks = [summary_text[i:i+1024] for i in range(0, len(summary_text), 1024)]
         for idx, chunk in enumerate(chunks, 1):
@@ -1057,7 +1057,7 @@ async def list_all_vps(ctx):
         vps_text = "\n".join(vps_info)
         chunks = [vps_text[i:i+1024] for i in range(0, len(vps_text), 1024)]
         for idx, chunk in enumerate(chunks, 1):
-            embed = create_embed(f"UnixNodes VPS Details (Part {idx})", "List of all UnixNodes VPS deployments", 0x1a1a1a)
+            embed = create_embed(f"RTC VPS Details (Part {idx})", "List of all RTC VPS deployments", 0x1a1a1a)
             add_field(embed, "VPS List", chunk, False)
             await ctx.send(embed=embed)
 
@@ -1066,11 +1066,11 @@ async def manage_shared_vps(ctx, owner: discord.Member, vps_number: int):
     owner_id = str(owner.id)
     user_id = str(ctx.author.id)
     if owner_id not in vps_data or vps_number < 1 or vps_number > len(vps_data[owner_id]):
-        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or owner doesn't have a UnixNodes VPS."))
+        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or owner doesn't have a RTC VPS."))
         return
     vps = vps_data[owner_id][vps_number - 1]
     if user_id not in vps.get("shared_with", []):
-        await ctx.send(embed=create_error_embed("Access Denied", "You do not have access to this UnixNodes VPS."))
+        await ctx.send(embed=create_error_embed("Access Denied", "You do not have access to this RTC VPS."))
         return
     view = ManageView(user_id, [vps], is_shared=True, owner_id=owner_id, actual_index=vps_number - 1)
     embed = await view.get_initial_embed()
@@ -1081,19 +1081,19 @@ async def share_user(ctx, shared_user: discord.Member, vps_number: int):
     user_id = str(ctx.author.id)
     shared_user_id = str(shared_user.id)
     if user_id not in vps_data or vps_number < 1 or vps_number > len(vps_data[user_id]):
-        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or you don't have a UnixNodes VPS."))
+        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or you don't have a RTC VPS."))
         return
     vps = vps_data[user_id][vps_number - 1]
     if "shared_with" not in vps:
         vps["shared_with"] = []
     if shared_user_id in vps["shared_with"]:
-        await ctx.send(embed=create_error_embed("Already Shared", f"{shared_user.mention} already has access to this UnixNodes VPS!"))
+        await ctx.send(embed=create_error_embed("Already Shared", f"{shared_user.mention} already has access to this RTC VPS!"))
         return
     vps["shared_with"].append(shared_user_id)
     save_vps_data()
-    await ctx.send(embed=create_success_embed("VPS Shared", f"UnixNodes VPS #{vps_number} shared with {shared_user.mention}!"))
+    await ctx.send(embed=create_success_embed("VPS Shared", f"RTC VPS #{vps_number} shared with {shared_user.mention}!"))
     try:
-        await shared_user.send(embed=create_embed("UnixNodes VPS Access Granted", f"You have access to VPS #{vps_number} from {ctx.author.mention}. Use `!manage-shared {ctx.author.mention} {vps_number}`", 0x00ff88))
+        await shared_user.send(embed=create_embed("RTC VPS Access Granted", f"You have access to VPS #{vps_number} from {ctx.author.mention}. Use `!manage-shared {ctx.author.mention} {vps_number}`", 0x00ff88))
     except discord.Forbidden:
         await ctx.send(embed=create_info_embed("Notification Failed", f"Could not DM {shared_user.mention}"))
 
@@ -1102,19 +1102,19 @@ async def revoke_share(ctx, shared_user: discord.Member, vps_number: int):
     user_id = str(ctx.author.id)
     shared_user_id = str(shared_user.id)
     if user_id not in vps_data or vps_number < 1 or vps_number > len(vps_data[user_id]):
-        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or you don't have a UnixNodes VPS."))
+        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or you don't have a RTC VPS."))
         return
     vps = vps_data[user_id][vps_number - 1]
     if "shared_with" not in vps:
         vps["shared_with"] = []
     if shared_user_id not in vps["shared_with"]:
-        await ctx.send(embed=create_error_embed("Not Shared", f"{shared_user.mention} doesn't have access to this UnixNodes VPS!"))
+        await ctx.send(embed=create_error_embed("Not Shared", f"{shared_user.mention} doesn't have access to this RTC VPS!"))
         return
     vps["shared_with"].remove(shared_user_id)
     save_vps_data()
-    await ctx.send(embed=create_success_embed("Access Revoked", f"Access to UnixNodes VPS #{vps_number} revoked from {shared_user.mention}!"))
+    await ctx.send(embed=create_success_embed("Access Revoked", f"Access to RTC VPS #{vps_number} revoked from {shared_user.mention}!"))
     try:
-        await shared_user.send(embed=create_embed("UnixNodes VPS Access Revoked", f"Your access to VPS #{vps_number} by {ctx.author.mention} has been revoked.", 0xff3366))
+        await shared_user.send(embed=create_embed("RTC VPS Access Revoked", f"Your access to VPS #{vps_number} by {ctx.author.mention} has been revoked.", 0xff3366))
     except discord.Forbidden:
         await ctx.send(embed=create_info_embed("Notification Failed", f"Could not DM {shared_user.mention}"))
 
@@ -1123,11 +1123,11 @@ async def revoke_share(ctx, shared_user: discord.Member, vps_number: int):
 async def delete_vps(ctx, user: discord.Member, vps_number: int, *, reason: str = "No reason"):
     user_id = str(user.id)
     if user_id not in vps_data or vps_number < 1 or vps_number > len(vps_data[user_id]):
-        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or user doesn't have a UnixNodes VPS."))
+        await ctx.send(embed=create_error_embed("Invalid VPS", "Invalid VPS number or user doesn't have a RTC VPS."))
         return
     vps = vps_data[user_id][vps_number - 1]
     container_name = vps["container_name"]
-    await ctx.send(embed=create_info_embed("Deleting UnixNodes VPS", f"Removing VPS #{vps_number}..."))
+    await ctx.send(embed=create_info_embed("Deleting RTC VPS", f"Removing VPS #{vps_number}..."))
     try:
         await execute_lxc(f"lxc delete {container_name} --force")
         del vps_data[user_id][vps_number - 1]
@@ -1137,11 +1137,11 @@ async def delete_vps(ctx, user: discord.Member, vps_number: int, *, reason: str 
                 vps_role = await get_or_create_vps_role(ctx.guild)
                 if vps_role and vps_role in user.roles:
                     try:
-                        await user.remove_roles(vps_role, reason="No UnixNodes VPS ownership")
+                        await user.remove_roles(vps_role, reason="No RTC VPS ownership")
                     except discord.Forbidden:
-                        logger.warning(f"Failed to remove UnixNodes VPS role from {user.name}")
+                        logger.warning(f"Failed to remove RTC VPS role from {user.name}")
         save_vps_data()
-        embed = create_success_embed("UnixNodes VPS Deleted Successfully")
+        embed = create_success_embed("RTC VPS Deleted Successfully")
         add_field(embed, "Owner", user.mention, True)
         add_field(embed, "VPS ID", f"#{vps_number}", True)
         add_field(embed, "Container", f"`{container_name}`", True)
@@ -1169,12 +1169,12 @@ async def add_resources(ctx, vps_id: str, ram: int = None, cpu: int = None, disk
         if found_vps:
             break
     if not found_vps:
-        await ctx.send(embed=create_error_embed("VPS Not Found", f"No UnixNodes VPS found with ID: `{vps_id}`"))
+        await ctx.send(embed=create_error_embed("VPS Not Found", f"No RTC VPS found with ID: `{vps_id}`"))
         return
     was_running = found_vps.get('status') == 'running' and not found_vps.get('suspended', False)
     disk_changed = disk is not None
     if was_running:
-        await ctx.send(embed=create_info_embed("Stopping VPS", f"Stopping UnixNodes VPS `{vps_id}` to apply resource changes..."))
+        await ctx.send(embed=create_info_embed("Stopping VPS", f"Stopping RTC VPS `{vps_id}` to apply resource changes..."))
         try:
             await execute_lxc(f"lxc stop {vps_id}")
             found_vps['status'] = 'stopped'
@@ -1221,7 +1221,7 @@ async def add_resources(ctx, vps_id: str, ram: int = None, cpu: int = None, disk
             found_vps['status'] = 'running'
             save_vps_data()
 
-        embed = create_success_embed("Resources Added", f"Successfully added resources to UnixNodes VPS `{vps_id}`")
+        embed = create_success_embed("Resources Added", f"Successfully added resources to RTC VPS `{vps_id}`")
         add_field(embed, "Changes Applied", "\n".join(changes), False)
         if disk_changed:
             add_field(embed, "Disk Note", "Run `sudo resize2fs /` inside the VPS to expand the filesystem.", False)
@@ -1235,16 +1235,16 @@ async def add_resources(ctx, vps_id: str, ram: int = None, cpu: int = None, disk
 async def admin_add(ctx, user: discord.Member):
     user_id = str(user.id)
     if user_id == str(MAIN_ADMIN_ID):
-        await ctx.send(embed=create_error_embed("Already Admin", "This user is already the main UnixNodes admin!"))
+        await ctx.send(embed=create_error_embed("Already Admin", "This user is already the main RTC admin!"))
         return
     if user_id in admin_data.get("admins", []):
-        await ctx.send(embed=create_error_embed("Already Admin", f"{user.mention} is already a UnixNodes admin!"))
+        await ctx.send(embed=create_error_embed("Already Admin", f"{user.mention} is already a RTC admin!"))
         return
     admin_data["admins"].append(user_id)
     save_admin_data()
-    await ctx.send(embed=create_success_embed("Admin Added", f"{user.mention} is now a UnixNodes admin!"))
+    await ctx.send(embed=create_success_embed("Admin Added", f"{user.mention} is now a RTC admin!"))
     try:
-        await user.send(embed=create_embed("🎉 UnixNodes Admin Role Granted", f"You are now a UnixNodes admin by {ctx.author.mention}", 0x00ff88))
+        await user.send(embed=create_embed("🎉 RTC Admin Role Granted", f"You are now a RTC admin by {ctx.author.mention}", 0x00ff88))
     except discord.Forbidden:
         await ctx.send(embed=create_info_embed("Notification Failed", f"Could not DM {user.mention}"))
 
@@ -1253,16 +1253,16 @@ async def admin_add(ctx, user: discord.Member):
 async def admin_remove(ctx, user: discord.Member):
     user_id = str(user.id)
     if user_id == str(MAIN_ADMIN_ID):
-        await ctx.send(embed=create_error_embed("Cannot Remove", "You cannot remove the main UnixNodes admin!"))
+        await ctx.send(embed=create_error_embed("Cannot Remove", "You cannot remove the main RTC admin!"))
         return
     if user_id not in admin_data.get("admins", []):
-        await ctx.send(embed=create_error_embed("Not Admin", f"{user.mention} is not a UnixNodes admin!"))
+        await ctx.send(embed=create_error_embed("Not Admin", f"{user.mention} is not a RTC admin!"))
         return
     admin_data["admins"].remove(user_id)
     save_admin_data()
-    await ctx.send(embed=create_success_embed("Admin Removed", f"{user.mention} is no longer a UnixNodes admin!"))
+    await ctx.send(embed=create_success_embed("Admin Removed", f"{user.mention} is no longer a RTC admin!"))
     try:
-        await user.send(embed=create_embed("⚠️ UnixNodes Admin Role Revoked", f"Your admin role was removed by {ctx.author.mention}", 0xff3366))
+        await user.send(embed=create_embed("⚠️ RTC Admin Role Revoked", f"Your admin role was removed by {ctx.author.mention}", 0xff3366))
     except discord.Forbidden:
         await ctx.send(embed=create_info_embed("Notification Failed", f"Could not DM {user.mention}"))
 
@@ -1271,7 +1271,7 @@ async def admin_remove(ctx, user: discord.Member):
 async def admin_list(ctx):
     admins = admin_data.get("admins", [])
     main_admin = await bot.fetch_user(MAIN_ADMIN_ID)
-    embed = create_embed("👑 UnixNodes Admin Team", "Current UnixNodes administrators:", 0x1a1a1a)
+    embed = create_embed("👑 RTC Admin Team", "Current RTC administrators:", 0x1a1a1a)
     add_field(embed, "🔰 Main Admin", f"{main_admin.mention} (ID: {MAIN_ADMIN_ID})", False)
     if admins:
         admin_list = []
@@ -1284,7 +1284,7 @@ async def admin_list(ctx):
         admin_text = "\n".join(admin_list)
         add_field(embed, "🛡️ Admins", admin_text, False)
     else:
-        add_field(embed, "🛡️ Admins", "No additional UnixNodes admins", False)
+        add_field(embed, "🛡️ Admins", "No additional RTC admins", False)
     await ctx.send(embed=embed)
 
 @bot.command(name='userinfo')
@@ -1292,7 +1292,7 @@ async def admin_list(ctx):
 async def user_info(ctx, user: discord.Member):
     user_id = str(user.id)
     vps_list = vps_data.get(user_id, [])
-    embed = create_embed(f"UnixNodes User Information - {user.name}", f"Detailed information for {user.mention}", 0x1a1a1a)
+    embed = create_embed(f"RTC User Information - {user.name}", f"Detailed information for {user.mention}", 0x1a1a1a)
     add_field(embed, "👤 User Details", f"**Name:** {user.name}\n**ID:** {user.id}\n**Joined:** {user.joined_at.strftime('%Y-%m-%d %H:%M:%S') if user.joined_at else 'Unknown'}", False)
     if vps_list:
         vps_info = []
@@ -1319,16 +1319,16 @@ async def user_info(ctx, user: discord.Member):
             total_cpu += int(vps['cpu'])
             total_storage += storage_gb
         vps_summary = f"**Total VPS:** {len(vps_list)}\n**Running:** {running_count}\n**Suspended:** {suspended_count}\n**Whitelisted:** {whitelisted_count}\n**Total RAM:** {total_ram}GB\n**Total CPU:** {total_cpu} cores\n**Total Storage:** {total_storage}GB"
-        add_field(embed, "🖥️ UnixNodes VPS Information", vps_summary, False)
+        add_field(embed, "🖥️ RTC VPS Information", vps_summary, False)
 
         vps_text = "\n".join(vps_info)
         chunks = [vps_text[i:i+1024] for i in range(0, len(vps_text), 1024)]
         for idx, chunk in enumerate(chunks, 1):
             add_field(embed, f"📋 VPS List (Part {idx})", chunk, False)
     else:
-        add_field(embed, "🖥️ UnixNodes VPS Information", "**No VPS owned**", False)
+        add_field(embed, "🖥️ RTC VPS Information", "**No VPS owned**", False)
     is_admin_user = user_id == str(MAIN_ADMIN_ID) or user_id in admin_data.get("admins", [])
-    add_field(embed, "🛡️ UnixNodes Admin Status", f"**{'Yes' if is_admin_user else 'No'}**", False)
+    add_field(embed, "🛡️ RTC Admin Status", f"**{'Yes' if is_admin_user else 'No'}**", False)
     await ctx.send(embed=embed)
 
 @bot.command(name='serverstats')
@@ -1356,7 +1356,7 @@ async def server_stats(ctx):
                     running_vps += 1
             if vps.get('whitelisted', False):
                 whitelisted_vps += 1
-    embed = create_embed("📊 UnixNodes Server Statistics", "Current UnixNodes server overview", 0x1a1a1a)
+    embed = create_embed("📊 RTC Server Statistics", "Current RTC server overview", 0x1a1a1a)
     add_field(embed, "👥 Users", f"**Total Users:** {total_users}\n**Total Admins:** {len(admin_data.get('admins', [])) + 1}", False)
     add_field(embed, "🖥️ VPS", f"**Total VPS:** {total_vps}\n**Running:** {running_vps}\n**Suspended:** {suspended_vps}\n**Whitelisted:** {whitelisted_vps}\n**Stopped:** {total_vps - running_vps - suspended_vps}", False)
     add_field(embed, "📈 Resources", f"**Total RAM:** {total_ram}GB\n**Total CPU:** {total_cpu} cores\n**Total Storage:** {total_storage}GB", False)
@@ -1376,13 +1376,13 @@ async def vps_info(ctx, container_name: str = None):
                         status_text += " (SUSPENDED)"
                     if vps.get('whitelisted', False):
                         status_text += " (WHITELISTED)"
-                    all_vps.append(f"**{user.name}** - UnixNodes VPS {i+1}: `{vps['container_name']}` - {status_text}")
+                    all_vps.append(f"**{user.name}** - RTC VPS {i+1}: `{vps['container_name']}` - {status_text}")
             except:
                 pass
         vps_text = "\n".join(all_vps)
         chunks = [vps_text[i:i+1024] for i in range(0, len(vps_text), 1024)]
         for idx, chunk in enumerate(chunks, 1):
-            embed = create_embed(f"🖥️ All UnixNodes VPS (Part {idx})", f"List of all UnixNodes VPS deployments", 0x1a1a1a)
+            embed = create_embed(f"🖥️ All RTC VPS (Part {idx})", f"List of all RTC VPS deployments", 0x1a1a1a)
             add_field(embed, "VPS List", chunk, False)
             await ctx.send(embed=embed)
     else:
@@ -1397,11 +1397,11 @@ async def vps_info(ctx, container_name: str = None):
             if found_vps:
                 break
         if not found_vps:
-            await ctx.send(embed=create_error_embed("VPS Not Found", f"No UnixNodes VPS found with container name: `{container_name}`"))
+            await ctx.send(embed=create_error_embed("VPS Not Found", f"No RTC VPS found with container name: `{container_name}`"))
             return
         suspended_text = " (SUSPENDED)" if found_vps.get('suspended', False) else ""
         whitelisted_text = " (WHITELISTED)" if found_vps.get('whitelisted', False) else ""
-        embed = create_embed(f"🖥️ UnixNodes VPS Information - {container_name}", f"Details for VPS owned by {found_user.mention}{suspended_text}{whitelisted_text}", 0x1a1a1a)
+        embed = create_embed(f"🖥️ RTC VPS Information - {container_name}", f"Details for VPS owned by {found_user.mention}{suspended_text}{whitelisted_text}", 0x1a1a1a)
         add_field(embed, "👤 Owner", f"**Name:** {found_user.name}\n**ID:** {found_user.id}", False)
         add_field(embed, "📊 Specifications", f"**RAM:** {found_vps['ram']}\n**CPU:** {found_vps['cpu']} Cores\n**Storage:** {found_vps['storage']}", False)
         add_field(embed, "📈 Status", f"**Current:** {found_vps.get('status', 'unknown').upper()}{suspended_text}{whitelisted_text}\n**Suspended:** {found_vps.get('suspended', False)}\n**Whitelisted:** {found_vps.get('whitelisted', False)}\n**Created:** {found_vps.get('created_at', 'Unknown')}", False)
@@ -1422,7 +1422,7 @@ async def vps_info(ctx, container_name: str = None):
 @bot.command(name='restart-vps')
 @is_admin()
 async def restart_vps(ctx, container_name: str):
-    await ctx.send(embed=create_info_embed("Restarting VPS", f"Restarting UnixNodes VPS `{container_name}`..."))
+    await ctx.send(embed=create_info_embed("Restarting VPS", f"Restarting RTC VPS `{container_name}`..."))
     try:
         await execute_lxc(f"lxc restart {container_name}")
         for user_id, vps_list in vps_data.items():
@@ -1432,14 +1432,14 @@ async def restart_vps(ctx, container_name: str):
                     vps['suspended'] = False
                     save_vps_data()
                     break
-        await ctx.send(embed=create_success_embed("VPS Restarted", f"UnixNodes VPS `{container_name}` has been restarted successfully!"))
+        await ctx.send(embed=create_success_embed("VPS Restarted", f"RTC VPS `{container_name}` has been restarted successfully!"))
     except Exception as e:
         await ctx.send(embed=create_error_embed("Restart Failed", f"Error: {str(e)}"))
 
 @bot.command(name='exec')
 @is_admin()
 async def execute_command(ctx, container_name: str, *, command: str):
-    await ctx.send(embed=create_info_embed("Executing Command", f"Running command in UnixNodes VPS `{container_name}`..."))
+    await ctx.send(embed=create_info_embed("Executing Command", f"Running command in RTC VPS `{container_name}`..."))
     try:
         proc = await asyncio.create_subprocess_exec(
             "lxc", "exec", container_name, "--", "bash", "-c", command,
@@ -1466,7 +1466,7 @@ async def execute_command(ctx, container_name: str, *, command: str):
 @bot.command(name='stop-vps-all')
 @is_admin()
 async def stop_all_vps(ctx):
-    embed = create_warning_embed("Stopping All UnixNodes VPS", "⚠️ **WARNING:** This will stop ALL running VPS on the UnixNodes server.\n\nThis action cannot be undone. Continue?")
+    embed = create_warning_embed("Stopping All RTC VPS", "⚠️ **WARNING:** This will stop ALL running VPS on the RTC server.\n\nThis action cannot be undone. Continue?")
     class ConfirmView(discord.ui.View):
         def __init__(self):
             super().__init__(timeout=60)
@@ -1490,13 +1490,13 @@ async def stop_all_vps(ctx):
                                 vps['suspended'] = False
                                 stopped_count += 1
                     save_vps_data()
-                    embed = create_success_embed("All UnixNodes VPS Stopped", f"Successfully stopped {stopped_count} VPS using `lxc stop --all --force`")
+                    embed = create_success_embed("All RTC VPS Stopped", f"Successfully stopped {stopped_count} VPS using `lxc stop --all --force`")
                     output_text = stdout.decode() if stdout else 'No output'
                     add_field(embed, "Command Output", f"```\n{output_text}\n```", False)
                     await interaction.followup.send(embed=embed)
                 else:
                     error_msg = stderr.decode() if stderr else "Unknown error"
-                    embed = create_error_embed("Stop Failed", f"Failed to stop UnixNodes VPS: {error_msg}")
+                    embed = create_error_embed("Stop Failed", f"Failed to stop RTC VPS: {error_msg}")
                     await interaction.followup.send(embed=embed)
             except Exception as e:
                 embed = create_error_embed("Error", f"Error stopping VPS: {str(e)}")
@@ -1504,7 +1504,7 @@ async def stop_all_vps(ctx):
 
         @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
         async def cancel(self, interaction: discord.Interaction, item: discord.ui.Button):
-            await interaction.response.edit_message(embed=create_info_embed("Operation Cancelled", "The stop all UnixNodes VPS operation has been cancelled."))
+            await interaction.response.edit_message(embed=create_info_embed("Operation Cancelled", "The stop all RTC VPS operation has been cancelled."))
     await ctx.send(embed=embed, view=ConfirmView())
 
 @bot.command(name='cpu-monitor')
@@ -1513,16 +1513,16 @@ async def resource_monitor_control(ctx, action: str = "status"):
     global resource_monitor_active
     if action.lower() == "status":
         status = "Active" if resource_monitor_active else "Inactive"
-        embed = create_embed("UnixNodes Resource Monitor Status", f"UnixNodes resource monitoring is currently **{status}**", 0x00ccff if resource_monitor_active else 0xffaa00)
+        embed = create_embed("RTC Resource Monitor Status", f"RTC resource monitoring is currently **{status}**", 0x00ccff if resource_monitor_active else 0xffaa00)
         add_field(embed, "Thresholds", f"{CPU_THRESHOLD}% CPU / {RAM_THRESHOLD}% RAM usage", True)
         add_field(embed, "Check Interval", f"60 seconds (host)", True)
         await ctx.send(embed=embed)
     elif action.lower() == "enable":
         resource_monitor_active = True
-        await ctx.send(embed=create_success_embed("Resource Monitor Enabled", "UnixNodes resource monitoring has been enabled."))
+        await ctx.send(embed=create_success_embed("Resource Monitor Enabled", "RTC resource monitoring has been enabled."))
     elif action.lower() == "disable":
         resource_monitor_active = False
-        await ctx.send(embed=create_warning_embed("Resource Monitor Disabled", "UnixNodes resource monitoring has been disabled."))
+        await ctx.send(embed=create_warning_embed("Resource Monitor Disabled", "RTC resource monitoring has been disabled."))
     else:
         await ctx.send(embed=create_error_embed("Invalid Action", "Use: `!cpu-monitor <status|enable|disable>`"))
 
@@ -1545,12 +1545,12 @@ async def resize_vps(ctx, container_name: str, ram: int = None, cpu: int = None,
         if found_vps:
             break
     if not found_vps:
-        await ctx.send(embed=create_error_embed("VPS Not Found", f"No UnixNodes VPS found with container name: `{container_name}`"))
+        await ctx.send(embed=create_error_embed("VPS Not Found", f"No RTC VPS found with container name: `{container_name}`"))
         return
     was_running = found_vps.get('status') == 'running' and not found_vps.get('suspended', False)
     disk_changed = disk is not None
     if was_running:
-        await ctx.send(embed=create_info_embed("Stopping VPS", f"Stopping UnixNodes VPS `{container_name}` to apply resource changes..."))
+        await ctx.send(embed=create_info_embed("Stopping VPS", f"Stopping RTC VPS `{container_name}` to apply resource changes..."))
         try:
             await execute_lxc(f"lxc stop {container_name}")
             found_vps['status'] = 'stopped'
@@ -1593,7 +1593,7 @@ async def resize_vps(ctx, container_name: str, ram: int = None, cpu: int = None,
             found_vps['status'] = 'running'
             save_vps_data()
 
-        embed = create_success_embed("VPS Resized", f"Successfully resized resources for UnixNodes VPS `{container_name}`")
+        embed = create_success_embed("VPS Resized", f"Successfully resized resources for RTC VPS `{container_name}`")
         add_field(embed, "Changes Applied", "\n".join(changes), False)
         if disk_changed:
             add_field(embed, "Disk Note", "Run `sudo resize2fs /` inside the VPS to expand the filesystem.", False)
@@ -1607,8 +1607,8 @@ async def resize_vps(ctx, container_name: str, ram: int = None, cpu: int = None,
 async def clone_vps(ctx, container_name: str, new_name: str = None):
     if not new_name:
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        new_name = f"unixnodes-{container_name}-clone-{timestamp}"
-    await ctx.send(embed=create_info_embed("Cloning VPS", f"Cloning UnixNodes VPS `{container_name}` to `{new_name}`..."))
+        new_name = f"RTC-{container_name}-clone-{timestamp}"
+    await ctx.send(embed=create_info_embed("Cloning VPS", f"Cloning RTC VPS `{container_name}` to `{new_name}`..."))
     try:
         found_vps = None
         user_id = None
@@ -1623,7 +1623,7 @@ async def clone_vps(ctx, container_name: str, new_name: str = None):
                 break
 
         if not found_vps:
-            await ctx.send(embed=create_error_embed("VPS Not Found", f"No UnixNodes VPS found with container name: `{container_name}`"))
+            await ctx.send(embed=create_error_embed("VPS Not Found", f"No RTC VPS found with container name: `{container_name}`"))
             return
 
         await execute_lxc(f"lxc copy {container_name} {new_name}")
@@ -1646,7 +1646,7 @@ async def clone_vps(ctx, container_name: str, new_name: str = None):
         vps_data[user_id].append(new_vps)
         save_vps_data()
 
-        embed = create_success_embed("VPS Cloned", f"Successfully cloned UnixNodes VPS `{container_name}` to `{new_name}`")
+        embed = create_success_embed("VPS Cloned", f"Successfully cloned RTC VPS `{container_name}` to `{new_name}`")
         add_field(embed, "New VPS Details", f"**RAM:** {new_vps['ram']}\n**CPU:** {new_vps['cpu']} Cores\n**Storage:** {new_vps['storage']}", False)
         add_field(embed, "Features", "Nesting, Privileged, FUSE, Kernel Modules (Docker Ready)", False)
         await ctx.send(embed=embed)
@@ -1657,11 +1657,11 @@ async def clone_vps(ctx, container_name: str, new_name: str = None):
 @bot.command(name='migrate-vps')
 @is_admin()
 async def migrate_vps(ctx, container_name: str, target_pool: str):
-    await ctx.send(embed=create_info_embed("Migrating VPS", f"Migrating UnixNodes VPS `{container_name}` to storage pool `{target_pool}`..."))
+    await ctx.send(embed=create_info_embed("Migrating VPS", f"Migrating RTC VPS `{container_name}` to storage pool `{target_pool}`..."))
     try:
         await execute_lxc(f"lxc stop {container_name}")
 
-        temp_name = f"unixnodes-{container_name}-temp-{int(time.time())}"
+        temp_name = f"RTC-{container_name}-temp-{int(time.time())}"
 
         await execute_lxc(f"lxc copy {container_name} {temp_name} -s {target_pool}")
 
@@ -1681,7 +1681,7 @@ async def migrate_vps(ctx, container_name: str, target_pool: str):
                     save_vps_data()
                     break
 
-        await ctx.send(embed=create_success_embed("VPS Migrated", f"Successfully migrated UnixNodes VPS `{container_name}` to storage pool `{target_pool}`"))
+        await ctx.send(embed=create_success_embed("VPS Migrated", f"Successfully migrated RTC VPS `{container_name}` to storage pool `{target_pool}`"))
 
     except Exception as e:
         await ctx.send(embed=create_error_embed("Migration Failed", f"Error: {str(e)}"))
@@ -1689,7 +1689,7 @@ async def migrate_vps(ctx, container_name: str, target_pool: str):
 @bot.command(name='vps-stats')
 @is_admin()
 async def vps_stats(ctx, container_name: str):
-    await ctx.send(embed=create_info_embed("Gathering Statistics", f"Collecting statistics for UnixNodes VPS `{container_name}`..."))
+    await ctx.send(embed=create_info_embed("Gathering Statistics", f"Collecting statistics for RTC VPS `{container_name}`..."))
     try:
         status = await get_container_status(container_name)
         cpu_usage = await get_container_cpu(container_name)
@@ -1709,7 +1709,7 @@ async def vps_stats(ctx, container_name: str):
                 network_usage = line.split(":")[1].strip()
                 break
 
-        embed = create_embed(f"📊 UnixNodes VPS Statistics - {container_name}", f"Resource usage statistics", 0x1a1a1a)
+        embed = create_embed(f"📊 RTC VPS Statistics - {container_name}", f"Resource usage statistics", 0x1a1a1a)
         add_field(embed, "📈 Status", f"**{status.upper()}**", False)
         add_field(embed, "💻 CPU Usage", f"**{cpu_usage}**", True)
         add_field(embed, "🧠 Memory Usage", f"**{memory_usage}**", True)
@@ -1758,7 +1758,7 @@ async def vps_network(ctx, container_name: str, action: str, value: str = None):
                 if len(output) > 1000:
                     output = output[:1000] + "\n... (truncated)"
 
-                embed = create_embed(f"🌐 UnixNodes Network Interfaces - {container_name}", "Network configuration", 0x1a1a1a)
+                embed = create_embed(f"🌐 RTC Network Interfaces - {container_name}", "Network configuration", 0x1a1a1a)
                 add_field(embed, "Interfaces", f"```\n{output}\n```", False)
                 await ctx.send(embed=embed)
             else:
@@ -1767,15 +1767,15 @@ async def vps_network(ctx, container_name: str, action: str, value: str = None):
         elif action.lower() == "limit" and value:
             await execute_lxc(f"lxc config device set {container_name} eth0 limits.egress {value}")
             await execute_lxc(f"lxc config device set {container_name} eth0 limits.ingress {value}")
-            await ctx.send(embed=create_success_embed("Network Limited", f"Set UnixNodes network limit to {value} for `{container_name}`"))
+            await ctx.send(embed=create_success_embed("Network Limited", f"Set RTC network limit to {value} for `{container_name}`"))
 
         elif action.lower() == "add" and value:
             await execute_lxc(f"lxc config device add {container_name} eth1 nic nictype=bridged parent={value}")
-            await ctx.send(embed=create_success_embed("Network Added", f"Added network interface to UnixNodes VPS `{container_name}` with bridge `{value}`"))
+            await ctx.send(embed=create_success_embed("Network Added", f"Added network interface to RTC VPS `{container_name}` with bridge `{value}`"))
 
         elif action.lower() == "remove" and value:
             await execute_lxc(f"lxc config device remove {container_name} {value}")
-            await ctx.send(embed=create_success_embed("Network Removed", f"Removed network interface `{value}` from UnixNodes VPS `{container_name}`"))
+            await ctx.send(embed=create_success_embed("Network Removed", f"Removed network interface `{value}` from RTC VPS `{container_name}`"))
 
         else:
             await ctx.send(embed=create_error_embed("Invalid Parameters", "Please provide valid parameters for the action"))
@@ -1785,7 +1785,7 @@ async def vps_network(ctx, container_name: str, action: str, value: str = None):
 @bot.command(name='vps-processes')
 @is_admin()
 async def vps_processes(ctx, container_name: str):
-    await ctx.send(embed=create_info_embed("Gathering Processes", f"Listing processes in UnixNodes VPS `{container_name}`..."))
+    await ctx.send(embed=create_info_embed("Gathering Processes", f"Listing processes in RTC VPS `{container_name}`..."))
     try:
         proc = await asyncio.create_subprocess_exec(
             "lxc", "exec", container_name, "--", "ps", "aux",
@@ -1799,7 +1799,7 @@ async def vps_processes(ctx, container_name: str):
             if len(output) > 1000:
                 output = output[:1000] + "\n... (truncated)"
 
-            embed = create_embed(f"⚙️ UnixNodes Processes - {container_name}", "Running processes", 0x1a1a1a)
+            embed = create_embed(f"⚙️ RTC Processes - {container_name}", "Running processes", 0x1a1a1a)
             add_field(embed, "Process List", f"```\n{output}\n```", False)
             await ctx.send(embed=embed)
         else:
@@ -1810,7 +1810,7 @@ async def vps_processes(ctx, container_name: str):
 @bot.command(name='vps-logs')
 @is_admin()
 async def vps_logs(ctx, container_name: str, lines: int = 50):
-    await ctx.send(embed=create_info_embed("Gathering Logs", f"Fetching last {lines} lines from UnixNodes VPS `{container_name}`..."))
+    await ctx.send(embed=create_info_embed("Gathering Logs", f"Fetching last {lines} lines from RTC VPS `{container_name}`..."))
     try:
         proc = await asyncio.create_subprocess_exec(
             "lxc", "exec", container_name, "--", "journalctl", "-n", str(lines),
@@ -1824,7 +1824,7 @@ async def vps_logs(ctx, container_name: str, lines: int = 50):
             if len(output) > 1000:
                 output = output[:1000] + "\n... (truncated)"
 
-            embed = create_embed(f"📋 UnixNodes Logs - {container_name}", f"Last {lines} log lines", 0x1a1a1a)
+            embed = create_embed(f"📋 RTC Logs - {container_name}", f"Last {lines} log lines", 0x1a1a1a)
             add_field(embed, "System Logs", f"```\n{output}\n```", False)
             await ctx.send(embed=embed)
         else:
@@ -1847,7 +1847,7 @@ async def suspend_vps(ctx, container_name: str, *, reason: str = "Admin action")
         for vps in lst:
             if vps['container_name'] == container_name:
                 if vps.get('status') != 'running':
-                    await ctx.send(embed=create_error_embed("Cannot Suspend", "UnixNodes VPS must be running to suspend."))
+                    await ctx.send(embed=create_error_embed("Cannot Suspend", "RTC VPS must be running to suspend."))
                     return
                 try:
                     await execute_lxc(f"lxc stop {container_name}")
@@ -1866,17 +1866,17 @@ async def suspend_vps(ctx, container_name: str, *, reason: str = "Admin action")
                     return
                 try:
                     owner = await bot.fetch_user(int(uid))
-                    embed = create_warning_embed("🚨 UnixNodes VPS Suspended", f"Your VPS `{container_name}` has been suspended by an admin.\n\n**Reason:** {reason}\n\nContact a UnixNodes admin to unsuspend.")
+                    embed = create_warning_embed("🚨 RTC VPS Suspended", f"Your VPS `{container_name}` has been suspended by an admin.\n\n**Reason:** {reason}\n\nContact a RTC admin to unsuspend.")
                     await owner.send(embed=embed)
                 except Exception as dm_e:
                     logger.error(f"Failed to DM owner {uid}: {dm_e}")
-                await ctx.send(embed=create_success_embed("VPS Suspended", f"UnixNodes VPS `{container_name}` suspended. Reason: {reason}"))
+                await ctx.send(embed=create_success_embed("VPS Suspended", f"RTC VPS `{container_name}` suspended. Reason: {reason}"))
                 found = True
                 break
         if found:
             break
     if not found:
-        await ctx.send(embed=create_error_embed("Not Found", f"UnixNodes VPS `{container_name}` not found."))
+        await ctx.send(embed=create_error_embed("Not Found", f"RTC VPS `{container_name}` not found."))
 
 @bot.command(name='unsuspend-vps')
 @is_admin()
@@ -1886,20 +1886,20 @@ async def unsuspend_vps(ctx, container_name: str):
         for vps in lst:
             if vps['container_name'] == container_name:
                 if not vps.get('suspended', False):
-                    await ctx.send(embed=create_error_embed("Not Suspended", "UnixNodes VPS is not suspended."))
+                    await ctx.send(embed=create_error_embed("Not Suspended", "RTC VPS is not suspended."))
                     return
                 try:
                     vps['suspended'] = False
                     vps['status'] = 'running'
                     await execute_lxc(f"lxc start {container_name}")
                     save_vps_data()
-                    await ctx.send(embed=create_success_embed("VPS Unsuspended", f"UnixNodes VPS `{container_name}` unsuspended and started."))
+                    await ctx.send(embed=create_success_embed("VPS Unsuspended", f"RTC VPS `{container_name}` unsuspended and started."))
                     found = True
                 except Exception as e:
                     await ctx.send(embed=create_error_embed("Start Failed", str(e)))
                 try:
                     owner = await bot.fetch_user(int(uid))
-                    embed = create_success_embed("🟢 UnixNodes VPS Unsuspended", f"Your VPS `{container_name}` has been unsuspended by an admin.\nYou can now manage it again.")
+                    embed = create_success_embed("🟢 RTC VPS Unsuspended", f"Your VPS `{container_name}` has been unsuspended by an admin.\nYou can now manage it again.")
                     await owner.send(embed=embed)
                 except Exception as dm_e:
                     logger.error(f"Failed to DM owner {uid} about unsuspension: {dm_e}")
@@ -1907,7 +1907,7 @@ async def unsuspend_vps(ctx, container_name: str):
         if found:
             break
     if not found:
-        await ctx.send(embed=create_error_embed("Not Found", f"UnixNodes VPS `{container_name}` not found."))
+        await ctx.send(embed=create_error_embed("Not Found", f"RTC VPS `{container_name}` not found."))
 
 @bot.command(name='suspension-logs')
 @is_admin()
@@ -1922,13 +1922,13 @@ async def suspension_logs(ctx, container_name: str = None):
             if found:
                 break
         if not found:
-            await ctx.send(embed=create_error_embed("Not Found", f"UnixNodes VPS `{container_name}` not found."))
+            await ctx.send(embed=create_error_embed("Not Found", f"RTC VPS `{container_name}` not found."))
             return
         history = found.get('suspension_history', [])
         if not history:
-            await ctx.send(embed=create_info_embed("No Suspensions", f"No UnixNodes suspension history for `{container_name}`."))
+            await ctx.send(embed=create_info_embed("No Suspensions", f"No RTC suspension history for `{container_name}`."))
             return
-        embed = create_embed("UnixNodes Suspension History", f"For `{container_name}`")
+        embed = create_embed("RTC Suspension History", f"For `{container_name}`")
         text = []
         for h in sorted(history, key=lambda x: x['time'], reverse=True)[:10]:
             t = datetime.fromisoformat(h['time']).strftime('%Y-%m-%d %H:%M:%S')
@@ -1946,12 +1946,12 @@ async def suspension_logs(ctx, container_name: str = None):
                     t = datetime.fromisoformat(event['time']).strftime('%Y-%m-%d %H:%M')
                     all_logs.append(f"**{t}** - VPS `{vps['container_name']}` (Owner: <@{uid}>) - {event['reason']} (by {event['by']})")
         if not all_logs:
-            await ctx.send(embed=create_info_embed("No Suspensions", "No UnixNodes suspension events recorded."))
+            await ctx.send(embed=create_info_embed("No Suspensions", "No RTC suspension events recorded."))
             return
         logs_text = "\n".join(all_logs)
         chunks = [logs_text[i:i+1024] for i in range(0, len(logs_text), 1024)]
         for idx, chunk in enumerate(chunks, 1):
-            embed = create_embed(f"UnixNodes Suspension Logs (Part {idx})", f"Global suspension events (newest first)")
+            embed = create_embed(f"RTC Suspension Logs (Part {idx})", f"Global suspension events (newest first)")
             add_field(embed, "Events", chunk, False)
             await ctx.send(embed=embed)
 
@@ -1977,7 +1977,7 @@ async def apply_permissions(ctx, container_name: str):
                     save_vps_data()
                     break
 
-        await ctx.send(embed=create_success_embed("Permissions Applied", f"Advanced permissions applied to UnixNodes VPS `{container_name}`. Docker-ready!"))
+        await ctx.send(embed=create_success_embed("Permissions Applied", f"Advanced permissions applied to RTC VPS `{container_name}`. Docker-ready!"))
     except Exception as e:
         await ctx.send(embed=create_error_embed("Apply Failed", f"Error: {str(e)}"))
 
@@ -2005,12 +2005,12 @@ async def resource_check(ctx):
                         vps['suspension_history'].append({
                             'time': datetime.now().isoformat(),
                             'reason': reason,
-                            'by': 'UnixNodes Auto Resource Check'
+                            'by': 'RTC Auto Resource Check'
                         })
                         save_vps_data()
                         try:
                             owner = await bot.fetch_user(int(user_id))
-                            warn_embed = create_warning_embed("🚨 VPS Auto-Suspended", f"Your VPS `{container}` has been automatically suspended due to high resource usage.\n\n**Reason:** {reason}\n\nContact UnixNodes admin to unsuspend and address the issue.")
+                            warn_embed = create_warning_embed("🚨 VPS Auto-Suspended", f"Your VPS `{container}` has been automatically suspended due to high resource usage.\n\n**Reason:** {reason}\n\nContact RTC admin to unsuspend and address the issue.")
                             await owner.send(embed=warn_embed)
                         except Exception as dm_e:
                             logger.error(f"Failed to DM owner {user_id}: {dm_e}")
@@ -2043,7 +2043,7 @@ async def whitelist_vps(ctx, container_name: str, action: str):
         if found:
             break
     if not found:
-        await ctx.send(embed=create_error_embed("Not Found", f"UnixNodes VPS `{container_name}` not found."))
+        await ctx.send(embed=create_error_embed("Not Found", f"RTC VPS `{container_name}` not found."))
 
 @bot.command(name='snapshot')
 @is_admin()
@@ -2051,7 +2051,7 @@ async def snapshot_vps(ctx, container_name: str, snap_name: str = "snap0"):
     await ctx.send(embed=create_info_embed("Creating Snapshot", f"Creating snapshot '{snap_name}' for `{container_name}`..."))
     try:
         await execute_lxc(f"lxc snapshot {container_name} {snap_name}")
-        await ctx.send(embed=create_success_embed("Snapshot Created", f"Snapshot '{snap_name}' created for UnixNodes VPS `{container_name}`."))
+        await ctx.send(embed=create_success_embed("Snapshot Created", f"Snapshot '{snap_name}' created for RTC VPS `{container_name}`."))
     except Exception as e:
         await ctx.send(embed=create_error_embed("Snapshot Failed", f"Error: {str(e)}"))
 
@@ -2087,7 +2087,7 @@ async def restore_snapshot(ctx, container_name: str, snap_name: str):
                             vps['suspended'] = False
                             save_vps_data()
                             break
-                await inter.followup.send(embed=create_success_embed("Snapshot Restored", f"Restored '{snap_name}' for UnixNodes VPS `{container_name}`."))
+                await inter.followup.send(embed=create_success_embed("Snapshot Restored", f"Restored '{snap_name}' for RTC VPS `{container_name}`."))
             except Exception as e:
                 await inter.followup.send(embed=create_error_embed("Restore Failed", f"Error: {str(e)}"))
 
@@ -2101,29 +2101,29 @@ async def show_help(ctx):
     user_id = str(ctx.author.id)
     is_user_admin = user_id == str(MAIN_ADMIN_ID) or user_id in admin_data.get("admins", [])
     is_user_main_admin = user_id == str(MAIN_ADMIN_ID)
-    embed = create_embed("📚 UnixNodes Command Help - User Commands", "UnixNodes VPS Manager Commands:", 0x1a1a1a)
+    embed = create_embed("📚 RTC Command Help - User Commands", "RTC VPS Manager Commands:", 0x1a1a1a)
     user_commands = [
-        ("!ping", "Check UnixNodes bot latency"),
+        ("!ping", "Check RTC bot latency"),
         ("!uptime", "Show host uptime"),
-        ("!myvps", "List your UnixNodes VPS"),
+        ("!myvps", "List your RTC VPS"),
         ("!manage [@user]", "Manage your VPS or another user's VPS (Admin only)"),
-        ("!share-user @user <vps_number>", "Share UnixNodes VPS access"),
-        ("!share-ruser @user <vps_number>", "Revoke UnixNodes VPS access"),
-        ("!manage-shared @owner <vps_number>", "Manage shared UnixNodes VPS")
+        ("!share-user @user <vps_number>", "Share RTC VPS access"),
+        ("!share-ruser @user <vps_number>", "Revoke RTC VPS access"),
+        ("!manage-shared @owner <vps_number>", "Manage shared RTC VPS")
     ]
     user_commands_text = "\n".join([f"**{cmd}** - {desc}" for cmd, desc in user_commands])
     add_field(embed, "👤 User Commands", user_commands_text, False)
     await ctx.send(embed=embed)
     if is_user_admin:
-        embed = create_embed("📚 UnixNodes Command Help - Admin Commands", "UnixNodes VPS Manager Commands:", 0x1a1a1a)
+        embed = create_embed("📚 RTC Command Help - Admin Commands", "RTC VPS Manager Commands:", 0x1a1a1a)
         admin_commands = [
             ("!lxc-list", "List all LXC containers"),
             ("!create <ram_gb> <cpu_cores> <disk_gb> @user", "Create VPS with OS selection"),
-            ("!delete-vps @user <vps_number> [reason]", "Delete user's UnixNodes VPS"),
-            ("!add-resources <container> [ram] [cpu] [disk]", "Add resources to UnixNodes VPS"),
-            ("!resize-vps <container> [ram] [cpu] [disk]", "Resize UnixNodes VPS resources"),
-            ("!suspend-vps <container> [reason]", "Suspend UnixNodes VPS"),
-            ("!unsuspend-vps <container>", "Unsuspend UnixNodes VPS"),
+            ("!delete-vps @user <vps_number> [reason]", "Delete user's RTC VPS"),
+            ("!add-resources <container> [ram] [cpu] [disk]", "Add resources to RTC VPS"),
+            ("!resize-vps <container> [ram] [cpu] [disk]", "Resize RTC VPS resources"),
+            ("!suspend-vps <container> [reason]", "Suspend RTC VPS"),
+            ("!unsuspend-vps <container>", "Unsuspend RTC VPS"),
             ("!suspension-logs [container]", "View suspension logs"),
             ("!whitelist-vps <container> <add|remove>", "Whitelist VPS from auto-suspend"),
             ("!resource-check", "Check and suspend high-usage VPS"),
@@ -2154,7 +2154,7 @@ async def show_help(ctx):
         add_field(embed, "🛡️ Admin Commands", admin_commands_text, False)
         await ctx.send(embed=embed)
     if is_user_main_admin:
-        embed = create_embed("📚 UnixNodes Command Help - Main Admin Commands", "UnixNodes VPS Manager Commands:", 0x1a1a1a)
+        embed = create_embed("📚 RTC Command Help - Main Admin Commands", "RTC VPS Manager Commands:", 0x1a1a1a)
         main_admin_commands = [
             ("!admin-add @user", "Add admin"),
             ("!admin-remove @user", "Remove admin"),
@@ -2162,20 +2162,20 @@ async def show_help(ctx):
         ]
         main_admin_commands_text = "\n".join([f"**{cmd}** - {desc}" for cmd, desc in main_admin_commands])
         add_field(embed, "👑 Main Admin Commands", main_admin_commands_text, False)
-        embed.set_footer(text="UnixNodes VPS Manager • Auto-suspend high-usage only • Whitelist support • Multi-OS • Enhanced monitoring • Docker-ready VPS • Snapshots")
+        embed.set_footer(text="RTC VPS Manager • Auto-suspend high-usage only • Whitelist support • Multi-OS • Enhanced monitoring • Docker-ready VPS • Snapshots")
         await ctx.send(embed=embed)
 
 # Command aliases for typos
 @bot.command(name='mangage')
 async def manage_typo(ctx):
-    await ctx.send(embed=create_info_embed("Command Correction", "Did you mean `!manage`? Use the correct UnixNodes command."))
+    await ctx.send(embed=create_info_embed("Command Correction", "Did you mean `!manage`? Use the correct RTC command."))
 
 @bot.command(name='stats')
 async def stats_alias(ctx):
     if str(ctx.author.id) == str(MAIN_ADMIN_ID) or str(ctx.author.id) in admin_data.get("admins", []):
         await server_stats(ctx)
     else:
-        await ctx.send(embed=create_error_embed("Access Denied", "This UnixNodes command requires admin privileges."))
+        await ctx.send(embed=create_error_embed("Access Denied", "This RTC command requires admin privileges."))
 
 @bot.command(name='info')
 async def info_alias(ctx, user: discord.Member = None):
@@ -2185,7 +2185,7 @@ async def info_alias(ctx, user: discord.Member = None):
         else:
             await ctx.send(embed=create_error_embed("Usage", "Please specify a user: `!info @user`"))
     else:
-        await ctx.send(embed=create_error_embed("Access Denied", "This UnixNodes command requires admin privileges."))
+        await ctx.send(embed=create_error_embed("Access Denied", "This RTC command requires admin privileges."))
 
 # Run the bot
 if __name__ == "__main__":
@@ -2193,4 +2193,5 @@ if __name__ == "__main__":
         bot.run(DISCORD_TOKEN)
     else:
         logger.error("No Discord token found in DISCORD_TOKEN environment variable.")
+
 
